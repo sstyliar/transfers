@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 //</da inludings>
 
-//random ass defines in the wild...dont look it int da eye
+//random ass defines in the wild...dont look it in da eyes
 #define SIZE 1024
 //structs
 typedef struct 
@@ -16,32 +16,53 @@ typedef struct
   char username[50];
   char msg[SIZE];
   int sock;
+  int id;
 }client;
 
 //initers
 client clientInit(client newClient){
 
   strcpy(newClient.username, "C sucks");
-  strcpy(newClient.msg, "");
+  strcpy(newClient.msg, "Handshake yo");
+  newClient.id = 0;
   return newClient;
 }
 
 
 //the core magic 
-void mainControler(client *newClient, int sock){
+void mainControler(int sock){
   int start =1;
+  char name[50], tempMsg[SIZE];
+  client newClient = clientInit(newClient);
+  newClient.sock = sock;
+  //at this point we have a struct with default name and msg and the sock
+  printf("Tell me your deepest darkest secrets...or just your name\n");
+  fgets(name, sizeof name, stdin);
+  strcpy(newClient.username, name);
+
+  //send to the server and initiate handshake (say hi :p)
+  send(sock, &newClient, sizeof(client), 0);
+  recv(sock, &newClient, sizeof(client), 0);
+  
+
+  printf("Server said: %s\n", newClient.msg);
+  printf("Server set your id to: %d\n\n", newClient.id);
+
   do{
-    if(start == 1){
-      start = 0;
-      //say hello to the server
-      //aka #handshake
+    printf("Wanna share something?...really, anything...: ");
+    strcpy(newClient.msg, ""); //clear the msg (maybe too much...but i have ocd anyways)
+    fgets(tempMsg, sizeof tempMsg, stdin);
+    strcpy(newClient.msg, tempMsg);
+
+    tempMsg[strcspn(tempMsg, "\n")] = 0;
+    if(strcmp(tempMsg, "cya") != 0){
       send(sock, &newClient, sizeof(client), 0);
-      recv(sock, &newClient, sizeof(client), 0);
-      printf("server said hello this msg: %s", newClient->msg);
     }
     else{
-      
+      send(sock, &newClient, sizeof(client), 0);
+      break;
     }
+
   }
   while(1);
 }
@@ -53,8 +74,7 @@ void mainControler(client *newClient, int sock){
 //Cause the main ints....haha xD( send help!! )
 int main(int argc, char *argv [])
 {
-  //init new client
-  client newClient = clientInit(newClient);
+  system("clear");
   //<initial stuff>
   int sock, i ;
   char msg[SIZE], name[50];
@@ -67,35 +87,9 @@ int main(int argc, char *argv [])
   connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   //</initial stuff>
 
-  printf("Tell me your deepest darkest secrets...or just you name\n");
-  fgets(name, sizeof name, stdin);
-  strcpy(newClient.username, name);
   //pass variables to main controller to handle logic
-  mainControler(&newClient, sock);
-
-
-  //  printf("\nWanna tell me a secret?");
-  //  printf("\n .\n .\n .\n .\n .\nPromise i wont tell it to anyone :)\n");
-  //
-  //  do{
-  //    if (fgets(msg, sizeof msg, stdin)) {
-  //      if (strcmp(msg, "\n")){
-  //        printf ("IM TELLING EVERYONE...: %s\n", msg);
-  //        send(sock, msg, strlen(msg) + 1, 0) ;  
-  //        strcpy(msg, "") ;
-  //        printf("Tell me more...  ");
-  //      }
-  //      else{
-  //        printf("\ncome again soon <3\n");
-  //        break;
-  //      }
-  //    }
-  //    else{
-  //      printf("Error in fgets func...");
-  //    }
-  //  }while(1);
+  mainControler(sock);
 
   close(sock);
-
   return 0;
 }
